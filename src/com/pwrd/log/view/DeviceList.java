@@ -18,6 +18,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.pwrd.log.bean.CmdInfo;
 import com.pwrd.log.bean.DeviceBean;
 import com.pwrd.log.callback.DeviceListListener;
 import com.pwrd.log.callback.DeviceModel;
@@ -36,7 +37,7 @@ import com.pwrd.log.utils.StringUtils;
 public class DeviceList extends JPanel {
 
 	// 设备列表
-	ArrayList<DeviceBean> mDeviceList = new ArrayList<DeviceBean>();
+	ArrayList<DeviceBean> mDeviceList = DeviceDataManager.getInstance().getDeviceList();
 
 	// 列表view
 	JList jList;
@@ -69,6 +70,8 @@ public class DeviceList extends JPanel {
 						mDeviceList.clear();
 						mDeviceList.addAll(tmp);
 						jList.updateUI();
+						OperLog.getInstance().recordLog("initData update devicelist : ");
+						DeviceDataManager.getInstance().printDeviceList(mDeviceList);
 					}
 				});
 			}
@@ -90,9 +93,11 @@ public class DeviceList extends JPanel {
 			public void valueChanged(ListSelectionEvent e) {
 				// 选中某一项
 				if (jList.getValueIsAdjusting()) {
-					mDeviceList = DeviceDataManager.getInstance().getDeviceList();
+//					mDeviceList = DeviceDataManager.getInstance().getDeviceList();
 					DeviceBean selectDeviceBean = mDeviceList.get(jList.getSelectedIndex());
 					OperLog.getInstance().recordLog("jList selected: " + selectDeviceBean.toResult());
+					CmdInfo cmdinfo = DeviceDataManager.getInstance().findCurrDeviceCmd(selectDeviceBean);
+					selectDeviceBean.cmdInfo = cmdinfo;
 					DeviceDataManager.getInstance().setCurrentDeviceBean(selectDeviceBean);
 //					if (deviceClickListener != null) {
 //						deviceClickListener.onClick(deviceList.get(jList.getSelectedIndex()));
@@ -130,8 +135,8 @@ public class DeviceList extends JPanel {
 			}
 		});
 		add(btnFresh);
-		killOtherAdb();
-
+//		killOtherAdb();
+		freshDeviceList();
 	}
 
 	/**
@@ -168,16 +173,7 @@ public class DeviceList extends JPanel {
 
 						DeviceBean bean = extractDeviceInfo(name);
 						bean.serialNo = serialNo;
-
-						deviceList.add(bean);
-						OperLog.getInstance().recordLog(deviceList.toString());
-
-						int decrementAndGet = deviceTotalCnt.decrementAndGet();
-						OperLog.getInstance().recordLog("findName refreshUI: device cnt: " + decrementAndGet);
-						if (decrementAndGet == 0) {
-							DeviceDataManager.getInstance().setDeviceList(new ArrayList<DeviceBean>(deviceList));
-						}
-
+						DeviceDataManager.getInstance().addDevice(bean);
 					}
 
 				}
@@ -288,8 +284,9 @@ public class DeviceList extends JPanel {
 	 */
 	private void freshDeviceList() {
 		btnFresh.setEnabled(false);
-		OperLog.getInstance().recordLog("freshDeviceList: devicelist before: " + mDeviceList);
-		mDeviceList.clear();
+//		OperLog.getInstance().recordLog("freshDeviceList: devicelist before: " + mDeviceList);
+//		mDeviceList.clear();
+		DeviceDataManager.getInstance().reset();
 		jList.updateUI();
 		String strPath = System.getProperty("user.dir");
 		String cmd = strPath + "\\library\\adb.exe devices";

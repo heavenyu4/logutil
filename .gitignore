@@ -1,2 +1,7 @@
 /.settings
 /build
+/.project
+/.classpath
+bin/
+library/oper.log
+/log

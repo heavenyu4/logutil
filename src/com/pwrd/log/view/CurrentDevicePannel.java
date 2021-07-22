@@ -249,6 +249,7 @@ public class CurrentDevicePannel extends JPanel {
 
 						@Override
 						public void refreshUI(String string) {
+							OperLog.getInstance().recordLog("initData: btnStart: " + string);
 
 						}
 					}, new NotifyCallBack() {
